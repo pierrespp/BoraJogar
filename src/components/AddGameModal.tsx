@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { searchSteamGames, SteamGameResult } from '../lib/steam';
+import { searchSteamGames, fetchSteamAppDetails, SteamGameResult } from '../lib/steam';
 import { Game } from '../types';
 
 interface AddGameModalProps {
@@ -38,16 +38,28 @@ export function AddGameModal({ isOpen, onClose, onAddGame }: AddGameModalProps) 
     }
   };
 
-  const handleSelectSteamGame = (steamGame: SteamGameResult) => {
+  const handleSelectSteamGame = async (steamGame: SteamGameResult) => {
+    setLoading(true);
+    let finalGame = steamGame;
+
+    // If genres are generic, try fetching rich app details from Steam API
+    if (!steamGame.genres || steamGame.genres.includes('Steam Game')) {
+      const richDetails = await fetchSteamAppDetails(steamGame.appid);
+      if (richDetails) {
+        finalGame = richDetails;
+      }
+    }
+
     onAddGame({
-      steam_appid: steamGame.appid,
-      name: steamGame.name,
-      image_url: steamGame.image_url,
-      genres: steamGame.genres,
-      min_players: steamGame.min_players || 1,
-      max_players: steamGame.max_players || 4,
+      steam_appid: finalGame.appid,
+      name: finalGame.name,
+      image_url: finalGame.image_url,
+      genres: finalGame.genres,
+      min_players: finalGame.min_players || 1,
+      max_players: finalGame.max_players || 4,
       source: 'steam',
     });
+    setLoading(false);
     onClose();
   };
 
@@ -118,18 +130,21 @@ export function AddGameModal({ isOpen, onClose, onAddGame }: AddGameModalProps) 
         {/* Steam Tab */}
         {tab === 'steam' && (
           <div className="mt-4 space-y-4">
-            <div className="flex gap-2">
+            <div className="space-y-1.5">
               <input
                 type="text"
-                placeholder="Digite o nome do jogo na Steam (ex: Lethal Company, CS2)..."
+                placeholder="Nome do jogo, ID da Steam (ex: 553850) ou Link..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   handleSearch(e.target.value);
                 }}
-                className="flex-1 rounded-xl border border-white/10 bg-slate-950 px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
                 autoFocus
               />
+              <p className="text-[10px] text-slate-400">
+                💡 Dica: Você pode pesquisar por nome, ID da Steam ou colar o link direto do jogo na loja da Steam.
+              </p>
             </div>
 
             {/* Results */}
