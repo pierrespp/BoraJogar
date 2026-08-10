@@ -1,0 +1,6 @@
+{
+  "name": "Bora Jogar App",
+  "description": "Análise e continuação do desenvolvimento do projeto Bora Jogar",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
